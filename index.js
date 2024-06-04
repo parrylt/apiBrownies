@@ -5,11 +5,13 @@ const app = express()
 const mongoose = require('mongoose')
 const crypto = require ('crypto');
 const Usuario = require('./models/Usuario')
-
+const Pedido = require('./models/Pedido')
+const Pagamento = require('./models/Pagamento')
+const Brownie = require('./models/Brownie')
 
 // conexão
 mongoose.connect(`mongodb://localhost:27017`).then(()=>{
-    console.log("Conectamos ao mongoDB")
+    console.log("Conectado ao mongoDB")
     app.listen(3000)
 })
 .catch((err)=>{
@@ -61,14 +63,16 @@ app.use(express.json())
 
 // cadastro
 app.post('/Usuario', async (req, res) => {
-  let { usuario, senha } = req.body;
+  let { nome, email, usuario, senha } = req.body;
   try {
       let novaSenha = await getCrypto(senha);
-      const Usuario = {
-          usuario,
-          senha: novaSenha,
-      };
-      await Usuario.create(Usuario);
+      const newUsuario = new Usuario({
+        nome,
+        email,
+        usuario,
+        senha: novaSenha,
+      });
+      await newUsuario.save();
       res.status(201).json({ message: 'Usuario cadastrado com sucesso!' });
   } catch (error) {
       res.status(500).json({ erro: error });
@@ -76,18 +80,18 @@ app.post('/Usuario', async (req, res) => {
 });
 
 
-// encontra cadastro 
+// encontra os usuários R do crud sei lá
 app.get('/Usuario', async (req, res) => {
   try {
-    const people = await Usuario.find()
-
-    res.status(200).json(people)
+    const usuarios = await Usuario.find()
+    res.status(200).json(usuarios)
   } catch (error) {
-    res.status(500).json({ erro: error })
+    res.status(500).json({ erro: error.message })
   }
 })
 
 
+//login de quem é de login
 
 app.post('/login', async (req, res) => {
   let { usuario, senha } = req.body;
@@ -101,77 +105,163 @@ app.post('/login', async (req, res) => {
       res.status(200).json({ message: 'Usuário Logado', user: Usuario });
   } catch (error) {
       res.status(500).json({ error: error.message });
+  }});
+
+
+// pedidos pedidos pedidos pedidos pedidos pedidos  CRUD
+//cadastra
+app.post('/Pedido', async (req, res) => {
+  const { quantidade, precoTotal, modoPagamento, usuario, nomeProduto } = req.body;
+    try {
+      const pedido = new Pedido 
+      ({ quantidade, precoTotal, modoPagamento, usuario, nomeProduto });
+      await pedido.save();
+      res.status(201).json({ message: 'Pedido feito com sucesso!', pedido});
+    }
+    catch (error) {
+      res.status(500).json({erro: error.message});
+    }
+});
+
+//ver
+app.get('/Pedido', async (req, res) => {
+  try{
+    const pedidos = await Pedido.find().populate('usuario').populate('nomeProduto');
+    res.status(200).json(pedidos);
+  } catch (error){
+    res.status(500).json ({erro: error.message});
+  }
+});
+
+//muda
+
+app.put('/Pedido/:id', async (req,res) =>{
+  const {id} = req.params;
+  const {quantidade, precoTotal, modoPagamento, usuario, nomeProduto } = req.body;
+  try{
+    const pedido = await Pedido.findByIdAndUpdate (id,
+      {quantidade, precoTotal, modoPagamento, usuario, nomeProduto}, {new: true});
+      res.status(200).json({message: 'Pedido mudado com sucesso, seu noia!', pedido});
+  }
+  catch (error){
+    res.status(500).json({erro: error.message});
+  }
+});
+
+//deletar cancelar apagar
+
+app.delete ('/Pedido/:id', async (req, res) => {
+  const {id} = req.params;
+  try{
+    await Pedido.findByIdAndDelete(id);
+    res.status(200).json ({message: 'Pedido excluído com sucesso!'});
+  } catch (error){
+    res.status(500).json({erro: error.message});
   }
 });
 
 
-
-
-
-// O R do CRUD 
-app.get('/Usuario/:id', async (req, res) => {
-  const id = req.params.id
-
-  try {
-    const Usuario = await Usuario.findOne({ _id: id })
-
-    if (!Usuario) {
-      res.status(422).json({ message: 'Usuário não encontrado!' })
-      return
+// pagamentos pagamentos pagamentos pagamentos pagamentos  CRUD
+//cadastra
+app.post('/Pagamento', async (req, res) => {
+  const { numCartao, nomeCartao, cvv, senha, usuario } = req.body;
+    try {
+      const pagamento = new Pagamento 
+      ({ numCartao, nomeCartao, cvv, senha, usuario });
+      await pagamento.save();
+      res.status(201).json({ message: 'Informações de pagamento cadastradas com sucesso!', pagamento});
     }
-
-    res.status(200).json(Usuario)
-  } catch (error) {
-    res.status(500).json({ erro: error })
-  }
-})
-
-// O U do CRUD 
-app.patch('/Usuario/:id', async (req, res) => {
-  const id = req.params.id
-
-  const { name, salary, approved } = req.body
-
-  const Usuario = {
-    name,
-    salary,
-    approved,
-  }
-
-  try {
-    const updatedUsuario = await Usuario.updateOne({ _id: id }, Usuario)
-
-    if (updatedUsuario.matchedCount === 0) {
-      res.status(422).json({ message: 'Usuário não encontrado!' })
-      return
+    catch (error) {
+      res.status(500).json({erro: error.message});
     }
+});
 
-    res.status(200).json(Usuario)
-  } catch (error) {
-    res.status(500).json({ erro: error })
+//ver
+app.get('/Pagamento', async (req, res) => {
+  try{
+    const pagamentos = await Pagamento.find().populate('usuario');
+    res.status(200).json(pagamentos);
+  } catch (error){
+    res.status(500).json ({erro: error.message});
   }
-})
+});
 
-// O D do CRUD 
-app.delete('/Usuario/:id', async (req, res) => {
-  const id = req.params.id
+//muda
 
-  const Usuario = await Usuario.findOne({ _id: id })
-
-  if (!Usuario) {
-    res.status(422).json({ message: 'Usuário não encontrado!' })
-    return
+app.put('/Pagamento/:id', async (req,res) =>{
+  const {id} = req.params;
+  const {numCartao, nomeCartao, cvv, senha, usuario } = req.body;
+  try{
+    const pagamento = await Pagamento.findByIdAndUpdate (id,
+      {numCartao, nomeCartao, cvv, senha, usuario}, {new: true});
+      res.status(200).json({message: 'Informações de pagamento atualizadas com sucesso, seu noia!', pagamento});
   }
-
-  try {
-    await Usuario.deleteOne({ _id: id })
-
-    res.status(200).json({ message: 'Usuário removido com sucesso!' })
-  } catch (error) {
-    res.status(500).json({ erro: error })
+  catch (error){
+    res.status(500).json({erro: error.message});
   }
-})
+});
 
-app.get('/', (req, res) => {
-  res.json({ message: 'Oi Express!' })
-})
+//deletar cancelar apagar
+
+app.delete ('/Pagamento/:id', async (req, res) => {
+  const {id} = req.params;
+  try{
+    await Pagamento.findByIdAndDelete(id);
+    res.status(200).json ({message: 'Informações de pagamento excluídas com sucesso!'});
+  } catch (error){
+    res.status(500).json({erro: error.message});
+  }
+});
+
+
+// brownies  brownies brownies brownies brownies brownies brownies brownies  CRUD
+//cadastra
+app.post('/Brownie', async (req, res) => {
+  const { nomeProduto, preco, cepa } = req.body;
+    try {
+      const brownie = new Brownie 
+      ({ nomeProduto, preco, cepa });
+      await brownie.save();
+      res.status(201).json({ message: 'Brownie de maconha cadastrado com sucesso!', brownie});
+    }
+    catch (error) {
+      res.status(500).json({erro: error.message});
+    }
+});
+
+//ver
+app.get('/Brownie', async (req, res) => {
+  try{
+    const brownies = await Brownie.find();
+    res.status(200).json(brownies);
+  } catch (error){
+    res.status(500).json ({erro: error.message});
+  }
+});
+
+//muda
+
+app.put('/Brownie/:id', async (req,res) =>{
+  const {id} = req.params;
+  const { nomeProduto, preco, cepa } = req.body;
+  try{
+    const brownie = await Brownie.findByIdAndUpdate (id,
+      {nomeProduto, preco, cepa}, {new: true});
+      res.status(200).json({message: 'Informações do brownie atualizadas com sucesso, seu noia!', brownie});
+  }
+  catch (error){
+    res.status(500).json({erro: error.message});
+  }
+});
+
+//deletar cancelar apagar
+
+app.delete ('/Brownie/:id', async (req, res) => {
+  const {id} = req.params;
+  try{
+    await Brownie.findByIdAndDelete(id);
+    res.status(200).json ({message: 'Brownie obliterado com sucesso!'});
+  } catch (error){
+    res.status(500).json({erro: error.message});
+  }
+});
