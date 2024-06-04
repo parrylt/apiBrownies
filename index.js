@@ -164,16 +164,23 @@ app.delete ('/Pedido/:id', async (req, res) => {
 // pagamentos pagamentos pagamentos pagamentos pagamentos  CRUD
 //cadastra
 app.post('/Pagamento', async (req, res) => {
-  const { numCartao, nomeCartao, cvv, senha, usuario } = req.body;
-    try {
-      const pagamento = new Pagamento 
-      ({ numCartao, nomeCartao, cvv, senha, usuario });
-      await pagamento.save();
-      res.status(201).json({ message: 'Informações de pagamento cadastradas com sucesso!', pagamento});
-    }
-    catch (error) {
-      res.status(500).json({erro: error.message});
-    }
+  let { numCartao, nomeCartao, cvv, senha, usuario } = req.body;
+  try {
+      let novoNumeroC = await getCrypto(numCartao);
+      let novoCVV = await getCrypto(cvv);
+      let novaSenha = await getCrypto(senha);
+      const newPagamento = new Pagamento({
+        numCartao: novoNumeroC,
+        nomeCartao,
+        cvv: novoCVV,
+        senha: novaSenha,
+        usuario,
+      });
+      await newPagamento.save();
+      res.status(201).json({ message: 'Informações de pagamento cadastradas com sucesso!'});
+  } catch (error) {
+      res.status(500).json({ erro: error });
+  }
 });
 
 //ver
