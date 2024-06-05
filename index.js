@@ -9,15 +9,6 @@ const Pedido = require('./models/Pedido')
 const Pagamento = require('./models/Pagamento')
 const Brownie = require('./models/Brownie')
 
-// conexão
-mongoose.connect(`mongodb://localhost:27017`).then(()=>{
-    console.log("Conectado ao mongoDB")
-    app.listen(3000)
-})
-.catch((err)=>{
-    console.log(err)
-})
-
 
 
 const cipher ={
@@ -272,3 +263,16 @@ app.delete ('/Brownie/:id', async (req, res) => {
     res.status(500).json({erro: error.message});
   }
 });
+
+app.get('/', (req, res) => {
+  res.json({ message: 'Teste' })
+})
+
+// conexão
+mongoose.connect(`mongodb://localhost:27017`).then(()=>{
+    console.log("Conectado ao mongoDB")
+    app.listen(3000)
+})
+.catch((err)=>{
+    console.log(err)
+})
