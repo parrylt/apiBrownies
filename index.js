@@ -103,51 +103,56 @@ app.post('/login', async (req, res) => {
 //cadastra
 app.post('/Pedido', async (req, res) => {
   const { quantidade, precoTotal, modoPagamento, usuario, nomeProduto } = req.body;
-    try {
-      const pedido = new Pedido 
-      ({ quantidade, precoTotal, modoPagamento, usuario, nomeProduto });
-      await pedido.save();
-      res.status(201).json({ message: 'Pedido feito com sucesso!', pedido});
+  try {
+    const userExists = await Usuario.findById(usuario);
+    const productExists = await Brownie.findById(nomeProduto);
+
+    if (!userExists || !productExists) {
+      res.status(422).json({ message: 'Usuário ou Produto não encontrado!' });
+      return;
     }
-    catch (error) {
-      res.status(500).json({erro: error.message});
-    }
+
+    const pedido = new Pedido({ quantidade, precoTotal, modoPagamento, usuario, nomeProduto });
+    await pedido.save();
+    res.status(201).json({ message: 'Pedido feito com sucesso!', pedido });
+  } catch (error) {
+    res.status(500).json({ erro: error.message });
+  }
 });
 
 //ver
 app.get('/Pedido', async (req, res) => {
-  try{
+  try {
     const pedidos = await Pedido.find().populate('usuario').populate('nomeProduto');
     res.status(200).json(pedidos);
-  } catch (error){
-    res.status(500).json ({erro: error.message});
+  } catch (error) {
+    res.status(500).json({ erro: error.message });
   }
 });
 
+
 //muda
 
-app.put('/Pedido/:id', async (req,res) =>{
-  const {id} = req.params;
-  const {quantidade, precoTotal, modoPagamento, usuario, nomeProduto } = req.body;
-  try{
-    const pedido = await Pedido.findByIdAndUpdate (id,
-      {quantidade, precoTotal, modoPagamento, usuario, nomeProduto}, {new: true});
-      res.status(200).json({message: 'Pedido mudado com sucesso, seu noia!', pedido});
-  }
-  catch (error){
-    res.status(500).json({erro: error.message});
+app.put('/Pedido/:id', async (req, res) => {
+  const { id } = req.params;
+  const { quantidade, precoTotal, modoPagamento, usuario, nomeProduto } = req.body;
+  try {
+    const pedido = await Pedido.findByIdAndUpdate(id, { quantidade, precoTotal, modoPagamento, usuario, nomeProduto }, { new: true });
+    res.status(200).json({ message: 'Pedido atualizado com sucesso!', pedido });
+  } catch (error) {
+    res.status(500).json({ erro: error.message });
   }
 });
 
 //deletar cancelar apagar
 
-app.delete ('/Pedido/:id', async (req, res) => {
-  const {id} = req.params;
-  try{
+app.delete('/Pedido/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
     await Pedido.findByIdAndDelete(id);
-    res.status(200).json ({message: 'Pedido excluído com sucesso!'});
-  } catch (error){
-    res.status(500).json({erro: error.message});
+    res.status(200).json({ message: 'Pedido excluído com sucesso!' });
+  } catch (error) {
+    res.status(500).json({ erro: error.message });
   }
 });
 
@@ -155,59 +160,65 @@ app.delete ('/Pedido/:id', async (req, res) => {
 // pagamentos pagamentos pagamentos pagamentos pagamentos  CRUD
 //cadastra
 app.post('/Pagamento', async (req, res) => {
-  let { numCartao, nomeCartao, cvv, senha, usuario } = req.body;
+  const { numCartao, nomeCartao, cvv, senha, usuario } = req.body;
   try {
-      let novoNumeroC = await getCrypto(numCartao);
-      let novoCVV = await getCrypto(cvv);
-      let novaSenha = await getCrypto(senha);
-      const newPagamento = new Pagamento({
-        numCartao: novoNumeroC,
-        nomeCartao,
-        cvv: novoCVV,
-        senha: novaSenha,
-        usuario,
-      });
-      await newPagamento.save();
-      res.status(201).json({ message: 'Informações de pagamento cadastradas com sucesso!'});
+    const userExists = await Usuario.findById(usuario);
+
+    if (!userExists) {
+      res.status(422).json({ message: 'Usuário não encontrado!' });
+      return;
+    }
+
+    const novoNumeroC = await getCrypto(numCartao.toString());
+    const novoCVV = await getCrypto(cvv.toString());
+    const novaSenha = await getCrypto(senha);
+
+    const newPagamento = new Pagamento({
+      numCartao: novoNumeroC,
+      nomeCartao,
+      cvv: novoCVV,
+      senha: novaSenha,
+      usuario,
+    });
+    await newPagamento.save();
+    res.status(201).json({ message: 'Informações de pagamento cadastradas com sucesso!' });
   } catch (error) {
-      res.status(500).json({ erro: error });
+    res.status(500).json({ erro: error.message });
   }
 });
 
 //ver
 app.get('/Pagamento', async (req, res) => {
-  try{
+  try {
     const pagamentos = await Pagamento.find().populate('usuario');
     res.status(200).json(pagamentos);
-  } catch (error){
-    res.status(500).json ({erro: error.message});
+  } catch (error) {
+    res.status(500).json({ erro: error.message });
   }
 });
 
 //muda
 
-app.put('/Pagamento/:id', async (req,res) =>{
-  const {id} = req.params;
-  const {numCartao, nomeCartao, cvv, senha, usuario } = req.body;
-  try{
-    const pagamento = await Pagamento.findByIdAndUpdate (id,
-      {numCartao, nomeCartao, cvv, senha, usuario}, {new: true});
-      res.status(200).json({message: 'Informações de pagamento atualizadas com sucesso, seu noia!', pagamento});
-  }
-  catch (error){
-    res.status(500).json({erro: error.message});
+app.put('/Pagamento/:id', async (req, res) => {
+  const { id } = req.params;
+  const { numCartao, nomeCartao, cvv, senha, usuario } = req.body;
+  try {
+    const pagamento = await Pagamento.findByIdAndUpdate(id, { numCartao, nomeCartao, cvv, senha, usuario }, { new: true });
+    res.status(200).json({ message: 'Informações de pagamento atualizadas com sucesso!', pagamento });
+  } catch (error) {
+    res.status(500).json({ erro: error.message });
   }
 });
 
 //deletar cancelar apagar
 
-app.delete ('/Pagamento/:id', async (req, res) => {
-  const {id} = req.params;
-  try{
+app.delete('/Pagamento/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
     await Pagamento.findByIdAndDelete(id);
-    res.status(200).json ({message: 'Informações de pagamento excluídas com sucesso!'});
-  } catch (error){
-    res.status(500).json({erro: error.message});
+    res.status(200).json({ message: 'Informações de pagamento excluídas com sucesso!' });
+  } catch (error) {
+    res.status{ erro: error.message });
   }
 });
 
