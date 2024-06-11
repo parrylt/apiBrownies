@@ -218,7 +218,7 @@ app.delete('/Pagamento/:id', async (req, res) => {
     await Pagamento.findByIdAndDelete(id);
     res.status(200).json({ message: 'Informações de pagamento excluídas com sucesso!' });
   } catch (error) {
-    res.status{ erro: error.message });
+    res.status( error = error.message );
   }
 });
 
@@ -276,7 +276,7 @@ app.delete ('/Brownie/:id', async (req, res) => {
 });
 
 app.get('/', (req, res) => {
-  res.json({ message: 'Teste' })
+  res.json({ message: 'Conectado' })
 })
 
 // conexão

@@ -1,9 +1,9 @@
 const mongoose = require('mongoose');
 
 const Pagamento = mongoose.model("Pagamento", {
-    numCartao: Number,
+    numCartao: String,
     nomeCartao: String,
-    cvv: Number,
+    cvv: String,
     senha: String,
     usuario: { type: mongoose.Schema.Types.ObjectId, ref: 'Usuario' },
 });
